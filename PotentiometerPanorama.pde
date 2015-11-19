@@ -2,15 +2,23 @@
 import processing.serial.*;
 
 Serial myPort;        // The serial port
-int yPos = 1;         // position of line
+int yPos = 1;         // position of Image
+
 
 //Image
 PImage myImage;
 int pointX = 0;
 int x;
 
+//Potentiometer controlled mouse
+float penX;
+color penColor = color( 60, 120, 20 ); // color of our pen
+
 void setup () {
   size(1000, 1000);
+  fill( penColor ); // set pen color
+
+    penX = width/2; // starting x position of pen
 
   // List all the available serial ports
   println(Serial.list());
@@ -22,49 +30,50 @@ void setup () {
   myPort.bufferUntil('\n');
 
   // set inital background:
-  background(0);
+
   myImage = loadImage( "optimized.jpg" ); //load image data
 }
 void draw () {
   //Arduino happens in the serialEvent()
   //Panorama controlled by mouse
 
-  int imageWidth = myImage.width;
-  if (mouseX > 525) {
-    pointX = pointX + ((mouseX-375)/50);
-  }
+  ellipse( penX, 0, 30, 30 );
 
-  if (mouseX < 475) {
-    pointX = ((mouseX-425)/50) + pointX;
-  }
+  int imageWidth = myImage.width;
+//
+//  if (penX > 525) {
+//    pointX = pointX + ((mouseX-375)/50);
+//  }
+//
+//  if (penX < 475) {
+//    pointX = ((mouseX-425)/50) + pointX;
+//  }
+
   for (int x = 1; x < 5; x++) {
-    image(myImage, -pointX, 0); // make an image and load it to the screen
-    image(myImage, -pointX - (x*imageWidth), 0);
-    image(myImage, -pointX + (x*imageWidth), 0);
+    image(myImage, -penX, 0); // make an image and load it to the screen
+    image(myImage, -penX - (x*imageWidth), 0); //ellipse controlled panorama
+    image(myImage, -penX + (x*imageWidth), 0);
   }
+  
+    ellipse( penX, mouseY, 30, 30 );
 }
 
-void serialEvent (Serial myPort) {
+//void serialEvent (Serial myPort)
+void serialEvent (Serial p) {
 
   // get the ASCII string:
-  String inString = myPort.readStringUntil('\n');
-//  String temp = new String(inString);
-  //  float inByte = float(inString);
-  //  int temp = Integer.parseInt(inString.toString());
+  //  String inString = myPort.readStringUntil('\n');
+  String inString = p.readString();
+  inString = trim( inString );  // remove any whitespace
   println(inString);
-//  println(temp);
-  //  println(temp);
-  //// if (inString != null) {
-  // // trim off any whitespace:
+
+
+  int v = int(inString); // convert from a string to int
+  penX = map( v, 0, 1023, 0, width); // map to window size
 
   // // convert to an int and map to the screen width:
-  // float inByte = float(inString);
-  // inByte = map(inByte, 0, 1023, 0, width);
-  //
-  //// int imageWidth = myImage.width;
-  //// draw the line:;
-  //stroke(0);
-  //line(width, yPos, width - inByte, yPos);
+ 
+
 }
 
 
