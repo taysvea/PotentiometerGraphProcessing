@@ -2,36 +2,46 @@
 import processing.serial.*;
 
 Serial myPort;        // The serial port
-int yPos = 1;         // position of Image
-
 
 //Image
-PImage myImage;
+int yPos = 1;         
+PImage myImage1;
+PImage myImage2;
 int pointX = 0;
 int x;
 
-//Potentiometer controlled mouse
+
+
+//ellipse
 float penX;
 color penColor = color( 60, 120, 20 ); // color of our pen
 
+//change image
+boolean buttonPressed;
+
+ 
 void setup () {
-  size(1000, 1000);
+  size(1400, 800);
   fill( penColor ); // set pen color
 
     penX = width/2; // starting x position of pen
 
   // List all the available serial ports
-  println(Serial.list());
+  println( Serial.list() );
 
   //Check the port!!! 
-  myPort = new Serial(this, Serial.list()[2], 9600);
+  myPort = new Serial(this, Serial.list()[0], 9600);
+
 
   // don't generate a serialEvent() unless you get a newline character:
   myPort.bufferUntil('\n');
 
   // set inital background:
+  myImage1 = loadImage( "Barn.jpg" ); //load image data
+  myImage2 = loadImage ("Farm.jpg");
+//  myImage3 = loadImage ("Landscape.jpg");
+//  myImage4 = loadImage ("Sunset.jpg");
 
-  myImage = loadImage( "optimized.jpg" ); //load image data
 }
 void draw () {
   //Arduino happens in the serialEvent()
@@ -39,51 +49,86 @@ void draw () {
 
   ellipse( penX, 0, 30, 30 );
 
-  int imageWidth = myImage.width;
-//
-//  if (penX > 525) {
-//    pointX = pointX + ((mouseX-375)/50);
-//  }
-//
-//  if (penX < 475) {
-//    pointX = ((mouseX-425)/50) + pointX;
-//  }
+  int imageWidth = myImage1.width;
 
   for (int x = 1; x < 5; x++) {
-    image(myImage, -penX, 0); // make an image and load it to the screen
-    image(myImage, -penX - (x*imageWidth), 0); //ellipse controlled panorama
-    image(myImage, -penX + (x*imageWidth), 0);
+    image(buttonPressed? myImage1: myImage2, -penX, 0); // make an image and load it to the screen
+    image(buttonPressed? myImage1: myImage2, -penX + (x*imageWidth), 0); //ellipse controlled panorama
+    image(buttonPressed? myImage1: myImage2, -penX - (x*imageWidth), 0);
   }
+
+
   
-    ellipse( penX, mouseY, 30, 30 );
+  
+ 
+
+  ellipse( penX, mouseY, 30, 30 );
 }
 
-//void serialEvent (Serial myPort)
+
 void serialEvent (Serial p) {
 
   // get the ASCII string:
-  //  String inString = myPort.readStringUntil('\n');
+
   String inString = p.readString();
-  inString = trim( inString );  // remove any whitespace
-  println(inString);
+
+  //  println(inString);
+  String pairs[] = split( inString, ';' ); // split up string into pairs
+
+  // go through each pair of label and value
+  // and assign it to its variable
+
+  for ( int i=0; i<pairs.length; i++) {
+    String data[] = split( pairs[i], ':' );
+
+    if ( data.length == 2 ) { // continue only if there are 2 things
+      String label = trim( data[0] ); // remove extra whitespace
+      String value = trim( data[1] ); // remove extra whitespace
+     
+print(label);
+print(value);
+      if ( label.equals( "number of button pushes" ) ) {
+        if ( value.equals( "1" ) ) {// if button was pressed
+          changeImage1();
+        }
+      }
+      
+//          if ( label.equals( "number of button pushes" ) ) {
+//        if ( value.equals( "3" ) ) {// if button was pressed
+//          changeImage2();
+//        }
+//      }
 
 
-  int v = int(inString); // convert from a string to int
-  penX = map( v, 0, 1023, 0, width); // map to window size
-
-  // // convert to an int and map to the screen width:
- 
-
+      if ( label.equals( "x") ) {
+        int v = int(value);
+        penX = map( v, 0, 1023, 0, width);
+      }
+    }
+  }
 }
 
+  void changeImage1() {
+  
+    int imageWidth = myImage2.width;
 
-// at the edge of the screen, go back to the beginning:
-// if (yPos >= width) {
-//   yPos = 0;
-// } else {
-// // increment the position:
-//   yPos++;
-// }  
-// } 
-// }
-
+  for (int x = 1; x < 5; x++) {
+    image(myImage1, -penX, 0); // make an image and load it to the screen
+    image(myImage1, -penX + (x*imageWidth), 0); //ellipse controlled panorama
+    image(myImage1, -penX - (x*imageWidth), 0);
+  }
+    buttonPressed = true;
+  }
+  
+//    void changeImage2() {
+//  
+//    int imageWidth = myImage3.width;
+//
+//  for (int x = 1; x < 5; x++) {
+//    image(myImage3, -penX, 0); // make an image and load it to the screen
+//    image(myImage3, -penX + (x*imageWidth), 0); //ellipse controlled panorama
+//    image(myImage3, -penX - (x*imageWidth), 0);
+//  }
+//    buttonPressed = true;
+//  }
+//  
